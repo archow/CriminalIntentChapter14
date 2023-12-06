@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.annotation.RequiresApi
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.setFragmentResultListener
@@ -19,7 +18,9 @@ import com.example.criminalintentchapter14.databinding.FragmentCrimeDetailBindin
 import com.example.criminalintentchapter14.viewmodels.CrimeDetailViewModel
 import com.example.criminalintentchapter14.viewmodels.CrimeDetailViewModelFactory
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Locale
 
 class CrimeDetailFragment : Fragment() {
     private var _binding: FragmentCrimeDetailBinding? = null
@@ -67,14 +68,16 @@ class CrimeDetailFragment : Fragment() {
         }
 
         setFragmentResultListener(DatePickerFragment.REQUEST_KEY_DATE) { _, bundle ->
-            val newDate =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    bundle.getSerializable(DatePickerFragment.BUNDLE_KEY_DATE, Date::class.java)
-                } else bundle.getSerializable(DatePickerFragment.BUNDLE_KEY_DATE) as Date
-            newDate?.let {
-                crimeDetailViewModel.updateCrime { oldCrime ->
-                    oldCrime.copy(date = it)
-                }
+            val newDate = bundle.getSerializable(DatePickerFragment.BUNDLE_KEY_DATE) as Date
+            crimeDetailViewModel.updateCrime { oldCrime ->
+                oldCrime.copy(date = newDate)
+            }
+        }
+
+        setFragmentResultListener(TimePickerFragment.REQUEST_KEY_TIME) { _, bundle ->
+            val newDate = bundle.getSerializable(TimePickerFragment.BUNDLE_KEY_TIME) as Date
+            crimeDetailViewModel.updateCrime { oldCrime ->
+                oldCrime.copy(date = newDate)
             }
         }
     }
@@ -92,6 +95,14 @@ class CrimeDetailFragment : Fragment() {
                     )
                 }
             }
+            crimeTime.apply {
+                text = toTimeFormat(crime.date)
+                setOnClickListener {
+                    findNavController().navigate(
+                        CrimeDetailFragmentDirections.selectTime(crime.date)
+                    )
+                }
+            }
             crimeSolved.isChecked = crime.isSolved
 
         }
@@ -100,5 +111,15 @@ class CrimeDetailFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun toDayFormat(date: Date): String {
+        val formatter = SimpleDateFormat("EEEEEEEE, MMMMMM dd, yyyy", Locale.getDefault())
+        return formatter.format(date)
+    }
+
+    private fun toTimeFormat(date: Date): String {
+        val formatter = SimpleDateFormat("hh:mm a", Locale.getDefault())
+        return formatter.format(date)
     }
 }
